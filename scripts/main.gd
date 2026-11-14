@@ -256,7 +256,7 @@ func _build_world() -> void:
 
 
 func _add_city_backdrop() -> void:
-    var city_texture: Texture2D = load("res://assets/city_horizon.jpg")
+    var city_texture: Texture2D = load("res://assets/city_horizon.svg")
     if city_texture == null:
         push_warning("City horizon texture is missing; using the procedural skyline only.")
         return
