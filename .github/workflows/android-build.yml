@@ -162,11 +162,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}
-          name: NEON RUN: AFTERLIGHT — Android build ${{ github.run_number }}
+          name: 'NEON RUN: AFTERLIGHT — Android build ${{ github.run_number }}'
           body: |
             Automated debug APK build for direct Android installation.
             Built with Godot 4.7.2. This is a sideload/debug build, not a Google Play release.
           files: build/NEON_RUN_AFTERLIGHT.apk
           make_latest: true
 
-# Workflow version: 2 — ensure the first push is scheduled.
+# Workflow version: 2 — quote YAML release title and ensure the first push is scheduled.
