@@ -128,11 +128,25 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF2
 
-      - name: Import Godot project resources
-        run: godot --headless --editor --path . --import
+      - name: Import Godot project resources and reject script errors
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --editor --path . --import 2>&1 | tee "$RUNNER_TEMP/godot-import.log"
+          if grep -E 'SCRIPT ERROR:|Failed to load script|Parse Error:|ERROR: Cannot export' "$RUNNER_TEMP/godot-import.log"; then
+            echo 'Godot import reported a project error.' >&2
+            exit 1
+          fi
 
       - name: Launch the game headlessly for a startup smoke test
-        run: godot --headless --path . --quit-after 5
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 5 2>&1 | tee "$RUNNER_TEMP/godot-startup.log"
+          if grep -E 'SCRIPT ERROR:|Failed to load script|Parse Error:|ERROR:' "$RUNNER_TEMP/godot-startup.log"; then
+            echo 'Godot startup reported a project error.' >&2
+            exit 1
+          fi
 
       - name: Export debug APK
         run: ./scripts/build_android.sh
