@@ -35,6 +35,10 @@ func _run_touch_tests() -> void:
     assert(float(game.get("slide_timer")) > 0.0, "Down swipe did not start a slide")
 
     game.queue_free()
+    await process_frame
+    game = null
+    packed_scene = null
+    await process_frame
     print("full-screen touch input passed: up/down/left/right at multiple screen positions")
     quit(0)
 
