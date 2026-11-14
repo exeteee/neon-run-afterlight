@@ -166,7 +166,7 @@ func _unhandled_input(event: InputEvent) -> void:
             touch_active = false
             _interpret_swipe(event.position - touch_start)
     elif event is InputEventScreenDrag and touch_active:
-        var drag := event.position - touch_start
+        var drag: Vector2 = event.position - touch_start
         if drag.length() > swipe_min_distance:
             _interpret_swipe(drag)
             touch_start = event.position
@@ -321,7 +321,7 @@ func _add_city_decor(segment: Node3D, zone_index: int, palette: Array) -> void:
             var height := rng.randf_range(7.0, 17.0) * (1.12 if zone_index == 2 else 1.0)
             var width := rng.randf_range(2.4, 3.5)
             var depth := rng.randf_range(7.0, 10.0)
-            var x := side * rng.randf_range(7.2, 10.5)
+            var x: float = float(side) * rng.randf_range(7.2, 10.5)
             var z := rng.randf_range(-8.0, 8.0)
             var base := _material(building_colors[rng.randi_range(0, building_colors.size() - 1)], 0.35, 0.32)
             var tower := _add_box(segment, Vector3(width, height, depth), Vector3(x, height * 0.5 - 0.1, z), base)
@@ -345,7 +345,7 @@ func _add_city_decor(segment: Node3D, zone_index: int, palette: Array) -> void:
 func _populate_segment(segment: Node3D, palette: Array) -> void:
     var difficulty: Dictionary = DIFFICULTIES[int(profile["difficulty"])]
     var density: float = float(difficulty["density"])
-    var row_positions := [-7.2, 0.0, 7.2]
+    var row_positions: Array[float] = [-7.2, 0.0, 7.2]
     for row_index in range(row_positions.size()):
         var blocked_lane := rng.randi_range(0, 2)
         var obstacle_kind := _choose_obstacle_kind()
@@ -364,7 +364,7 @@ func _populate_segment(segment: Node3D, palette: Array) -> void:
                 safe_lane = candidate_lane
                 break
         for coin_index in range(3):
-            var coin_z := row_positions[row_index] + float(coin_index - 1) * 1.55
+            var coin_z: float = row_positions[row_index] + float(coin_index - 1) * 1.55
             _spawn_pickup(segment, safe_lane, coin_z, "coin", palette)
         if row_index == 1 and rng.randf() < 0.82:
             _spawn_pickup(segment, safe_lane, row_positions[row_index] - 0.6, "cell", palette)
