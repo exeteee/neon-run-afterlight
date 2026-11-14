@@ -389,7 +389,7 @@ func _add_city_decor(segment: Node3D, zone_index: int, palette: Array) -> void:
         Color("#132d55"), Color("#1b3152")
     ]
     for side in [-1.0, 1.0]:
-        for building_index in range(2):
+        for building_index in range(1):
             var height: float = rng.randf_range(15.0, 28.0) * (1.18 if zone_index == 2 else 1.0)
             var width: float = rng.randf_range(3.4, 5.2)
             var depth: float = rng.randf_range(7.5, 10.5)
@@ -402,7 +402,7 @@ func _add_city_decor(segment: Node3D, zone_index: int, palette: Array) -> void:
 
             var glow_color: Color = palette[3] if building_index == 0 else palette[2]
             var window_mat := _material(glow_color, 0.18, 0.20, true, 1.05)
-            var window_rows: int = clampi(int(height / 4.0), 3, 6)
+            var window_rows: int = clampi(int(height / 4.8), 3, 5)
             # The front face is +Z because the runner camera looks down -Z.
             for row_index in range(window_rows):
                 var window_y: float = 2.2 + float(row_index) * 2.75
