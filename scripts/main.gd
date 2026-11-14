@@ -233,8 +233,8 @@ func _build_world() -> void:
     camera_3d.position = Vector3(0.0, 6.5, 10.5)
     camera_3d.fov = 62.0
     camera_3d.current = true
-    camera_3d.look_at(Vector3(0.0, 1.2, -17.0), Vector3.UP)
     add_child(camera_3d)
+    camera_3d.look_at(Vector3(0.0, 1.2, -17.0), Vector3.UP)
 
     for index in range(MAX_SEGMENTS):
         var segment := _create_segment(-11.0 - float(index) * SEGMENT_LENGTH, index == 0)
