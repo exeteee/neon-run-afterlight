@@ -93,9 +93,11 @@ class ProjectIntegrityTests(unittest.TestCase):
             self.assertEqual(img.size, (432, 432))
 
     def test_reference_city_backdrop_and_global_touch_handler(self):
-        with Image.open(ROOT / 'assets/city_horizon.jpg') as img:
-            self.assertGreaterEqual(img.width, 256)
-            self.assertGreaterEqual(img.height, 75)
+        skyline = (ROOT / 'assets/city_horizon.svg').read_text(encoding='utf-8')
+        self.assertIn('<svg', skyline)
+        self.assertIn('viewBox="0 0 1200 350"', skyline)
+        self.assertIn('id="moon"', skyline)
+        self.assertIn('id="train"', skyline)
         script = (ROOT / 'scripts/main.gd').read_text(encoding='utf-8')
         self.assertIn('func _input(event: InputEvent)', script)
         input_block = script.split('func _input(event: InputEvent)', 1)[1].split('func _unhandled_input', 1)[0]
