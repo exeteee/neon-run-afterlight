@@ -498,7 +498,8 @@ func _add_monorail_train(segment: Node3D, rail_x: float, palette: Array) -> void
         var window_z: float = -4.7 + float(window_index) * 2.0
         for side in [-1.0, 1.0]:
             _add_box(train, Vector3(0.06, 0.42, 1.35), Vector3(side * 1.29, 0.20, window_z), window_mat)
-            _add_box(train, Vector3(0.07, 0.08, 12.3), Vector3(side * 1.31, -0.46, 0.0), cyan_mat)
+    for side in [-1.0, 1.0]:
+        _add_box(train, Vector3(0.07, 0.08, 12.3), Vector3(side * 1.31, -0.46, 0.0), cyan_mat)
     _add_box(train, Vector3(0.62, 0.12, 0.08), Vector3(-0.75, -0.30, -7.23), cyan_mat)
     _add_box(train, Vector3(0.62, 0.12, 0.08), Vector3(0.75, -0.30, -7.23), cyan_mat)
 
