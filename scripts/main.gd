@@ -147,6 +147,30 @@ func _process(delta: float) -> void:
     _update_hud()
 
 
+func _input(event: InputEvent) -> void:
+    # Read touch gestures before Control nodes can consume them. This makes the
+    # whole game viewport a swipe surface, just like a mobile endless runner.
+    if mode != "running":
+        touch_active = false
+        return
+    if event is InputEventScreenTouch:
+        if event.index != 0:
+            return
+        if event.pressed:
+            touch_start = event.position
+            touch_active = true
+        elif touch_active:
+            var swipe_delta: Vector2 = event.position - touch_start
+            touch_active = false
+            if swipe_delta.length() >= swipe_min_distance:
+                _interpret_swipe(swipe_delta)
+    elif event is InputEventScreenDrag and touch_active:
+        var drag: Vector2 = event.position - touch_start
+        if drag.length() >= swipe_min_distance:
+            touch_active = false
+            _interpret_swipe(drag)
+
+
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
         if mode == "running":
@@ -158,19 +182,7 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     if mode != "running":
         return
-    if event is InputEventScreenTouch:
-        if event.pressed:
-            touch_start = event.position
-            touch_active = true
-        elif touch_active:
-            touch_active = false
-            _interpret_swipe(event.position - touch_start)
-    elif event is InputEventScreenDrag and touch_active:
-        var drag: Vector2 = event.position - touch_start
-        if drag.length() > swipe_min_distance:
-            _interpret_swipe(drag)
-            touch_start = event.position
-    elif event is InputEventKey and event.pressed and not event.echo:
+    if event is InputEventKey and event.pressed and not event.echo:
         match event.keycode:
             KEY_LEFT, KEY_A:
                 _change_lane(-1)
@@ -203,6 +215,7 @@ func _build_world() -> void:
     world_root = Node3D.new()
     world_root.name = "World"
     add_child(world_root)
+    _add_city_backdrop()
 
     world_environment = WorldEnvironment.new()
     var environment := Environment.new()
@@ -241,6 +254,28 @@ func _build_world() -> void:
         segments.append(segment)
 
 
+
+func _add_city_backdrop() -> void:
+    var city_texture: Texture2D = load("res://assets/city_horizon.jpg")
+    if city_texture == null:
+        push_warning("City horizon texture is missing; using the procedural skyline only.")
+        return
+    var backdrop_mesh := QuadMesh.new()
+    backdrop_mesh.size = Vector2(470.0, 132.0)
+    var backdrop := MeshInstance3D.new()
+    backdrop.name = "DistantNeonSkyline"
+    backdrop.mesh = backdrop_mesh
+    backdrop.position = Vector3(0.0, 66.0, -238.0)
+    var backdrop_material := StandardMaterial3D.new()
+    backdrop_material.albedo_texture = city_texture
+    backdrop_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    backdrop_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+    backdrop_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+    backdrop.material_override = backdrop_material
+    backdrop.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    world_root.add_child(backdrop)
+
+
 func _build_runner() -> void:
     runner_root = Node3D.new()
     runner_root.name = "Courier"
@@ -265,6 +300,12 @@ func _build_runner() -> void:
     _add_box(runner_body, Vector3(0.26, 0.42, 0.28), Vector3(0.0, 1.26, -0.35), orange)
     _add_box(runner_body, Vector3(0.13, 0.5, 0.06), Vector3(0.0, 1.27, -0.51), cyan)
     _add_box(runner_body, Vector3(0.72, 0.09, 0.13), Vector3(0.0, 0.84, 0.0), cyan)
+    for side in [-1.0, 1.0]:
+        var shoulder := _add_sphere(runner_body, 0.19, Vector3(side * 0.42, 1.48, -0.02), armor)
+        shoulder.scale = Vector3(1.20, 0.78, 1.05)
+        _add_box(runner_body, Vector3(0.10, 0.38, 0.16), Vector3(side * 0.40, 1.45, 0.16), cyan)
+        _add_box(runner_body, Vector3(0.08, 0.52, 0.08), Vector3(side * 0.20, 1.30, -0.50), cyan)
+    _add_box(runner_body, Vector3(0.34, 0.12, 0.12), Vector3(0.0, 2.12, 0.02), orange)
 
     left_arm = _build_limb(runner_body, Vector3(-0.43, 1.46, 0.0), 0.14, 0.56, armor)
     right_arm = _build_limb(runner_body, Vector3(0.43, 1.46, 0.0), 0.14, 0.56, armor)
@@ -279,6 +320,12 @@ func _build_limb(parent: Node3D, pivot: Vector3, radius: float, height: float, m
     _add_capsule(limb, radius, height, Vector3(0.0, -height * 0.30, 0.0), material)
     var glow := _material(Color("#30dff4"), 0.35, 0.2, true, 0.8)
     _add_box(limb, Vector3(radius * 1.65, 0.06, radius * 1.7), Vector3(0.0, -height * 0.46, 0.0), glow)
+    if height > 0.60:
+        var boot_mat := _material(Color("#0a1426"), 0.52, 0.22)
+        var sole_mat := _material(Color("#27e4ff"), 0.18, 0.16, true, 1.15)
+        _add_box(limb, Vector3(0.32, 0.18, 0.42), Vector3(0.0, -height * 0.55, 0.08), boot_mat)
+        _add_box(limb, Vector3(0.31, 0.045, 0.40), Vector3(0.0, -height * 0.66, 0.08), sole_mat)
+        _add_box(limb, Vector3(0.25, 0.28, 0.10), Vector3(0.0, -height * 0.25, 0.13), glow)
     return limb
 
 
@@ -290,7 +337,7 @@ func _create_segment(z_position: float, safe_start: bool = false) -> Node3D:
 
     var zone_index := int(floor(maxf(distance_m, 0.0) / ZONE_LENGTH)) % 3
     var palette: Array = ZONE_COLORS[zone_index]
-    var road_mat := _material(palette[0], 0.48, 0.22)
+    var road_mat := _material(palette[0], 0.58, 0.16)
     var rail_mat := _material(palette[1], 0.45, 0.22, true, 0.65)
     var accent_mat := _material(palette[3], 0.28, 0.18, true, 1.65)
     var warm_mat := _material(palette[2], 0.26, 0.22, true, 1.35)
@@ -303,10 +350,32 @@ func _create_segment(z_position: float, safe_start: bool = false) -> Node3D:
     _add_box(segment, Vector3(0.10, 0.08, SEGMENT_LENGTH), Vector3(-4.4, 0.22, 0.0), warm_mat)
     _add_box(segment, Vector3(0.10, 0.08, SEGMENT_LENGTH), Vector3(4.4, 0.22, 0.0), warm_mat)
 
-    for stripe_index in range(4):
-        var stripe_z := -8.2 + float(stripe_index) * 5.4
+    for stripe_index in range(5):
+        var stripe_z := -8.8 + float(stripe_index) * 4.4
         _add_box(segment, Vector3(0.42, 0.035, 0.11), Vector3(-3.0, -0.02, stripe_z), warm_mat)
         _add_box(segment, Vector3(0.42, 0.035, 0.11), Vector3(3.0, -0.02, stripe_z), warm_mat)
+
+    # Reflective road streaks imitate wet neon asphalt without expensive
+    # real-time reflections on entry-level Android GPUs.
+    var wet_cyan := _material(Color("#1aa8d2"), 0.34, 0.12, true, 0.32)
+    var wet_amber := _material(Color("#b66a28"), 0.28, 0.14, true, 0.28)
+    for puddle_index in range(5):
+        var puddle_x: float = rng.randf_range(-3.85, 3.85)
+        var puddle_z: float = rng.randf_range(-9.0, 9.0)
+        var puddle_width: float = rng.randf_range(0.10, 0.34)
+        var puddle_length: float = rng.randf_range(0.65, 2.25)
+        var puddle_material: Material = wet_cyan if puddle_index % 2 == 0 else wet_amber
+        var puddle := _add_box(segment, Vector3(puddle_width, 0.012, puddle_length), Vector3(puddle_x, -0.030, puddle_z), puddle_material)
+        puddle.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+    var barrier_mat := _material(Color("#111d34"), 0.52, 0.30)
+    var barrier_glow := _material(palette[3], 0.20, 0.18, true, 1.05)
+    for side in [-1.0, 1.0]:
+        _add_box(segment, Vector3(0.24, 0.68, SEGMENT_LENGTH), Vector3(side * 4.66, 0.28, 0.0), barrier_mat)
+        _add_box(segment, Vector3(0.08, 0.08, SEGMENT_LENGTH), Vector3(side * 4.66, 0.67, 0.0), barrier_glow)
+        for post_index in range(4):
+            var post_z: float = -8.2 + float(post_index) * 5.45
+            _add_box(segment, Vector3(0.32, 0.18, 0.24), Vector3(side * 4.66, 0.16, post_z), warm_mat)
 
     _add_city_decor(segment, zone_index, palette)
     if not safe_start:
@@ -315,31 +384,123 @@ func _create_segment(z_position: float, safe_start: bool = false) -> Node3D:
 
 
 func _add_city_decor(segment: Node3D, zone_index: int, palette: Array) -> void:
-    var building_colors := [Color("#172c55"), Color("#20254e"), Color("#123e50"), Color("#2a2650")]
+    var building_colors: Array[Color] = [
+        Color("#101c3b"), Color("#17264a"), Color("#123a4c"), Color("#24224d"),
+        Color("#132d55"), Color("#1b3152")
+    ]
     for side in [-1.0, 1.0]:
-        for b in range(2):
-            var height := rng.randf_range(7.0, 17.0) * (1.12 if zone_index == 2 else 1.0)
-            var width := rng.randf_range(2.4, 3.5)
-            var depth := rng.randf_range(7.0, 10.0)
-            var x: float = float(side) * rng.randf_range(7.2, 10.5)
-            var z := rng.randf_range(-8.0, 8.0)
-            var base := _material(building_colors[rng.randi_range(0, building_colors.size() - 1)], 0.35, 0.32)
+        for building_index in range(2):
+            var height: float = rng.randf_range(15.0, 28.0) * (1.18 if zone_index == 2 else 1.0)
+            var width: float = rng.randf_range(3.4, 5.2)
+            var depth: float = rng.randf_range(7.5, 10.5)
+            var x: float = float(side) * rng.randf_range(11.2, 16.8)
+            var z: float = rng.randf_range(-8.5, 8.5)
+            var building_color: Color = building_colors[rng.randi_range(0, building_colors.size() - 1)]
+            var base := _material(building_color, 0.48, 0.32)
             var tower := _add_box(segment, Vector3(width, height, depth), Vector3(x, height * 0.5 - 0.1, z), base)
             tower.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-            var glow_color: Color = palette[3] if b == 0 else palette[2]
-            var window_mat := _material(glow_color, 0.25, 0.18, true, 1.2)
-            for floor_index in range(2, int(height / 2.4)):
-                if rng.randf() < 0.65:
-                    var wy := float(floor_index) * 2.0
-                    _add_box(segment, Vector3(width * 0.56, 0.10, 0.06), Vector3(x, wy, z - depth * 0.51 - 0.035), window_mat)
-            var roof_bar := _add_box(segment, Vector3(width * 0.72, 0.12, 0.12), Vector3(x, height + 0.1, z), window_mat)
-            roof_bar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
-    var overhead_mat := _material(palette[1], 0.32, 0.25, true, 0.8)
-    _add_box(segment, Vector3(0.12, 0.12, SEGMENT_LENGTH), Vector3(-5.5, 4.4, 0.0), overhead_mat)
-    _add_box(segment, Vector3(0.12, 0.12, SEGMENT_LENGTH), Vector3(5.5, 4.4, 0.0), overhead_mat)
-    if rng.randf() < 0.40:
-        _add_box(segment, Vector3(11.0, 0.10, 0.10), Vector3(0.0, 4.35, -rng.randf_range(-6.0, 6.0)), overhead_mat)
+            var glow_color: Color = palette[3] if building_index == 0 else palette[2]
+            var window_mat := _material(glow_color, 0.18, 0.20, true, 1.05)
+            var window_rows: int = clampi(int(height / 4.0), 3, 6)
+            # The front face is +Z because the runner camera looks down -Z.
+            for row_index in range(window_rows):
+                var window_y: float = 2.2 + float(row_index) * 2.75
+                for column_index in range(2):
+                    var window_x: float = x + (float(column_index) - 0.5) * width * 0.40
+                    var window := _add_box(
+                        segment,
+                        Vector3(width * 0.22, 0.72, 0.055),
+                        Vector3(window_x, window_y, z + depth * 0.5 + 0.045),
+                        window_mat
+                    )
+                    window.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+            var spine := _add_box(
+                segment,
+                Vector3(0.16, height * 0.78, 0.10),
+                Vector3(x + float(side) * width * 0.34, height * 0.53, z + depth * 0.5 + 0.06),
+                _material(palette[3], 0.18, 0.16, true, 1.3)
+            )
+            spine.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+            var crown := _add_box(
+                segment,
+                Vector3(width * 0.46, 0.15, 0.18),
+                Vector3(x, height + 0.05, z),
+                _material(palette[2], 0.18, 0.18, true, 1.15)
+            )
+            crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+        # A few distant spires add depth behind the street-level buildings.
+        if rng.randf() < 0.62:
+            var spire_height: float = rng.randf_range(32.0, 48.0)
+            var spire_x: float = float(side) * rng.randf_range(18.5, 24.0)
+            var spire_z: float = rng.randf_range(-8.0, 8.0)
+            var spire := _add_box(
+                segment,
+                Vector3(rng.randf_range(2.0, 3.0), spire_height, 4.2),
+                Vector3(spire_x, spire_height * 0.5, spire_z),
+                _material(building_colors[rng.randi_range(0, building_colors.size() - 1)], 0.48, 0.28)
+            )
+            spire.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+            var spire_light := _add_box(
+                segment,
+                Vector3(0.10, spire_height * 0.82, 0.08),
+                Vector3(spire_x, spire_height * 0.52, spire_z + 2.14),
+                _material(palette[3], 0.15, 0.16, true, 1.25)
+            )
+            spire_light.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+    _add_monorail(segment, zone_index, palette)
+
+
+func _add_monorail(segment: Node3D, zone_index: int, palette: Array) -> void:
+    var rail_side: float = 1.0 if rng.randf() < 0.72 else -1.0
+    var rail_x: float = rail_side * 7.25
+    var support_mat := _material(Color("#101b32"), 0.62, 0.28)
+    var rail_mat := _material(palette[3], 0.30, 0.18, true, 0.95)
+    _add_box(segment, Vector3(3.25, 0.36, SEGMENT_LENGTH + 0.6), Vector3(rail_x, 6.55, 0.0), support_mat)
+    _add_box(segment, Vector3(0.14, 0.16, SEGMENT_LENGTH), Vector3(rail_x - 1.22, 6.78, 0.0), rail_mat)
+    _add_box(segment, Vector3(0.14, 0.16, SEGMENT_LENGTH), Vector3(rail_x + 1.22, 6.78, 0.0), rail_mat)
+
+    var pylon_mat := _material(Color("#182947"), 0.56, 0.30)
+    var pylon_light := _material(palette[2], 0.18, 0.20, true, 1.0)
+    for post_index in range(3):
+        var post_z: float = -8.0 + float(post_index) * 8.0
+        var pylon := _add_box(segment, Vector3(0.42, 6.45, 0.48), Vector3(rail_x, 3.05, post_z), pylon_mat)
+        pylon.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        _add_box(segment, Vector3(0.62, 0.16, 0.62), Vector3(rail_x, 5.95, post_z), pylon_light)
+
+    if rng.randf() < (0.30 if zone_index == 0 else 0.23):
+        _add_monorail_train(segment, rail_x, palette)
+
+
+func _add_monorail_train(segment: Node3D, rail_x: float, palette: Array) -> void:
+    var train := Node3D.new()
+    train.name = "PassingSkylineTrain"
+    train.position = Vector3(rail_x, 7.55, -2.2)
+    segment.add_child(train)
+
+    var body_mat := _material(Color("#152b46"), 0.72, 0.20)
+    var window_mat := _material(Color("#ffbd69"), 0.25, 0.16, true, 1.65)
+    var cyan_mat := _material(Color("#27e4ff"), 0.20, 0.12, true, 1.9)
+    var front_glass := _material(Color("#77eaff"), 0.30, 0.12, true, 1.25)
+    var body := _add_box(train, Vector3(2.56, 1.42, 13.8), Vector3(0.0, 0.0, 0.0), body_mat)
+    body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+    var nose := _add_sphere(train, 1.0, Vector3(0.0, -0.02, -6.55), body_mat)
+    nose.scale = Vector3(1.25, 0.78, 1.55)
+    nose.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    _add_box(train, Vector3(1.54, 0.50, 0.08), Vector3(0.0, 0.28, -7.18), front_glass)
+
+    for window_index in range(5):
+        var window_z: float = -4.7 + float(window_index) * 2.0
+        for side in [-1.0, 1.0]:
+            _add_box(train, Vector3(0.06, 0.42, 1.35), Vector3(side * 1.29, 0.20, window_z), window_mat)
+            _add_box(train, Vector3(0.07, 0.08, 12.3), Vector3(side * 1.31, -0.46, 0.0), cyan_mat)
+    _add_box(train, Vector3(0.62, 0.12, 0.08), Vector3(-0.75, -0.30, -7.23), cyan_mat)
+    _add_box(train, Vector3(0.62, 0.12, 0.08), Vector3(0.75, -0.30, -7.23), cyan_mat)
 
 
 func _populate_segment(segment: Node3D, palette: Array) -> void:
