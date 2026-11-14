@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#06142f"/><stop offset="0.48" stop-color="#123a78"/><stop offset="1" stop-color="#07182c"/>
+  </linearGradient>
+  <linearGradient id="horizon" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#06bfe9" stop-opacity="0.08"/><stop offset="0.5" stop-color="#6b83ff" stop-opacity="0.45"/><stop offset="1" stop-color="#ee3bc5" stop-opacity="0.16"/>
+  </linearGradient>
+  <linearGradient id="train" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#c9e8ff"/><stop offset="0.42" stop-color="#2a5e91"/><stop offset="1" stop-color="#0b2039"/>
+  </linearGradient>
+  <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#16d9ff" stop-opacity="0.8"/><stop offset="1" stop-color="#075a9d" stop-opacity="0.05"/>
+  </linearGradient>
+  <linearGradient id="pink" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ff4bd4"/><stop offset="1" stop-color="#6a47ff" stop-opacity="0.35"/>
+  </linearGradient>
+  <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#0cb8f4"/><stop offset="1" stop-color="#73f9ff"/>
+  </linearGradient>
+  <radialGradient id="moon">
+    <stop offset="0" stop-color="#f2fbff"/><stop offset="0.78" stop-color="#b9ddff"/><stop offset="1" stop-color="#8db8f0"/>
+  </radialGradient>
+</defs>
+<rect width="1200" height="350" fill="url(#sky)"/>
+<circle cx="790" cy="74" r="31" fill="url(#moon)" opacity="0.95"/>
+<circle cx="778" cy="63" r="5" fill="#8fb5df" opacity="0.25"/>
+<circle cx="802" cy="87" r="8" fill="#8fb5df" opacity="0.18"/>
+<path d="M0 108 Q180 55 340 104 T690 92 T1200 65" fill="none" stroke="#75baff" stroke-width="3" opacity="0.11"/>
+<path d="M0 144 Q210 98 390 134 T780 126 T1200 105" fill="none" stroke="#59b8ff" stroke-width="5" opacity="0.10"/>
+<path d="M0 178 Q210 154 360 166 T700 157 T1200 143 L1200 250 L0 250Z" fill="url(#horizon)"/>
+<!-- distant needle towers -->
+<g fill="#0b2140" stroke="#1c4775" stroke-width="2">
+ <path d="M500 310 L514 82 L526 310Z"/><path d="M510 82 L518 0 L525 82Z"/>
+ <path d="M572 310 L590 25 L608 310Z"/><path d="M584 25 L590 0 L596 25Z"/>
+ <path d="M650 310 L667 105 L684 310Z"/><path d="M662 105 L667 42 L672 105Z"/>
+ <path d="M890 310 L903 93 L916 310Z"/><path d="M898 93 L903 22 L908 93Z"/>
+ <path d="M1040 310 L1052 128 L1064 310Z"/><path d="M1048 128 L1052 75 L1056 128Z"/>
+</g>
+<!-- left-side illuminated towers -->
+<g>
+ <path d="M12 310 L22 75 L135 75 L151 310Z" fill="#101f42" stroke="#1c8cc4" stroke-width="3"/>
+ <path d="M26 78 L36 36 L123 36 L134 78Z" fill="#142d59" stroke="#1c83b9" stroke-width="2"/>
+ <rect x="42" y="91" width="12" height="170" fill="#22dcff" opacity="0.9"/>
+ <rect x="67" y="92" width="16" height="186" fill="#ffc05b" opacity="0.9"/>
+ <rect x="95" y="92" width="18" height="155" fill="#4e9cff" opacity="0.8"/>
+ <path d="M154 310 L169 9 L254 9 L275 310Z" fill="#101d3b" stroke="#ff45c7" stroke-width="3"/>
+ <rect x="183" y="30" width="57" height="255" fill="url(#pink)" opacity="0.9"/>
+ <path d="M196 48 L230 48 L222 190 L190 190Z" fill="#163e69" opacity="0.8"/>
+ <path d="M187 210 L244 210" stroke="#fff0ff" stroke-width="3" opacity="0.75"/>
+ <path d="M283 310 L301 112 L373 112 L390 310Z" fill="#0d2243" stroke="#20bce9" stroke-width="3"/>
+ <rect x="313" y="129" width="12" height="152" fill="#22dfff"/>
+ <rect x="341" y="129" width="12" height="152" fill="#ffa64f"/>
+ <path d="M406 310 L420 58 L465 58 L481 310Z" fill="#0e2140" stroke="#7b74ff" stroke-width="3"/>
+ <rect x="434" y="78" width="9" height="190" fill="#bd64ff"/>
+</g>
+<!-- right-side tall neon towers -->
+<g>
+ <path d="M922 310 L936 40 L1002 40 L1017 310Z" fill="#102346" stroke="#1dcaf4" stroke-width="3"/>
+ <rect x="950" y="55" width="11" height="215" fill="#2be7ff"/>
+ <rect x="975" y="55" width="10" height="215" fill="#ffae4e"/>
+ <path d="M1023 310 L1040 15 L1123 15 L1140 310Z" fill="#111e3e" stroke="#9e4fff" stroke-width="3"/>
+ <rect x="1060" y="30" width="10" height="245" fill="#db51ef"/>
+ <rect x="1086" y="30" width="12" height="245" fill="#20ccff"/>
+ <path d="M1145 310 L1158 112 L1190 112 L1200 310Z" fill="#0c1b37" stroke="#22bce9" stroke-width="2"/>
+</g>
+<!-- windows -->
+<g fill="#ffbf64" opacity="0.85">
+ <path d="M8 125h8v9h-8z M8 151h8v9h-8z M8 177h8v9h-8z M8 203h8v9h-8z"/>
+ <path d="M270 64h8v18h-8z M270 95h8v18h-8z M270 126h8v18h-8z"/>
+ <path d="M387 140h8v15h-8z M387 169h8v15h-8z M387 198h8v15h-8z"/>
+ <path d="M917 150h8v15h-8z M917 180h8v15h-8z M917 210h8v15h-8z"/>
+ <path d="M1128 54h8v14h-8z M1128 81h8v14h-8z M1128 108h8v14h-8z"/>
+</g>
+<!-- elevated tracks sweep across the city -->
+<path d="M0 206 C220 175 370 195 520 214 S930 196 1200 177" fill="none" stroke="#091b35" stroke-width="27"/>
+<path d="M0 194 C220 163 370 183 520 202 S930 184 1200 165" fill="none" stroke="#35cfff" stroke-width="5" opacity="0.92"/>
+<path d="M0 212 C220 181 370 201 520 220 S930 202 1200 183" fill="none" stroke="#ff9e49" stroke-width="3" opacity="0.88"/>
+<!-- waterfall/cyan plaza on left -->
+<path d="M0 220 L130 208 L157 350 L0 350Z" fill="#0c3156" opacity="0.85"/>
+<path d="M112 216 L138 211 L145 350 L118 350Z" fill="url(#water)"/>
+<path d="M126 217 L130 350 M140 215 L142 350" stroke="#69f5ff" stroke-width="3" opacity="0.65"/>
+<path d="M0 300 Q36 286 74 300 T150 305" fill="none" stroke="#31dfff" stroke-width="8" opacity="0.38"/>
+<!-- futuristic train on the elevated track -->
+<g transform="translate(735 158) rotate(-2)">
+ <path d="M-144 44 L-128 9 Q-113 -19 -82 -22 L104 -22 Q136 -20 150 10 L160 44 Q160 56 145 59 L-131 59 Q-151 58 -144 44Z" fill="url(#train)" stroke="#82cbff" stroke-width="3"/>
+ <path d="M-108 -12 L-77 -17 L-62 24 L-122 25Z" fill="#1b4e79" stroke="#42dfff" stroke-width="2"/>
+ <path d="M-48 -15 L-8 -15 L-8 25 L-57 25Z" fill="#133756" stroke="#37c9f2" stroke-width="2"/>
+ <path d="M2 -15 L42 -15 L49 25 L2 25Z" fill="#153b5b" stroke="#37c9f2" stroke-width="2"/>
+ <path d="M55 -14 L94 -12 L112 28 L58 25Z" fill="#163d63" stroke="#38cfff" stroke-width="2"/>
+ <path d="M117 -8 L142 18 L148 34 L128 31Z" fill="#8befff"/>
+ <path d="M-135 43 L149 43" stroke="#20dfff" stroke-width="7"/>
+ <path d="M-117 57 L-88 57 M85 57 L121 57" stroke="#ffab48" stroke-width="7"/>
+</g>
+<!-- glowing skyline haze -->
+<path d="M0 300 Q250 272 480 288 T950 276 T1200 264 L1200 350 L0 350Z" fill="#07182b" opacity="0.72"/>
+<path d="M0 320 Q250 297 480 312 T950 299 T1200 290" fill="none" stroke="#0fc8ff" stroke-width="6" opacity="0.16"/>
+<path d="M0 337 Q250 318 480 330 T950 320 T1200 308" fill="none" stroke="#ff9a47" stroke-width="5" opacity="0.12"/>
+</svg>
