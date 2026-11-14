@@ -81,6 +81,7 @@ jobs:
           sdkmanager --sdk_root="$SDK_ROOT" \
             "platform-tools" \
             "platforms;android-35" \
+            "platforms;android-36" \
             "build-tools;35.0.1" \
             "cmdline-tools;latest" \
             "cmake;3.10.2.4988404" \
