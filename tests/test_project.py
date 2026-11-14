@@ -92,6 +92,18 @@ class ProjectIntegrityTests(unittest.TestCase):
         with Image.open(ROOT / 'assets/icon_background_432.png') as img:
             self.assertEqual(img.size, (432, 432))
 
+    def test_reference_city_backdrop_and_global_touch_handler(self):
+        with Image.open(ROOT / 'assets/city_horizon.jpg') as img:
+            self.assertGreaterEqual(img.width, 600)
+            self.assertGreaterEqual(img.height, 160)
+        script = (ROOT / 'scripts/main.gd').read_text(encoding='utf-8')
+        self.assertIn('func _input(event: InputEvent)', script)
+        input_block = script.split('func _input(event: InputEvent)', 1)[1].split('func _unhandled_input', 1)[0]
+        self.assertIn('event is InputEventScreenTouch', input_block)
+        self.assertIn('_interpret_swipe(swipe_delta)', input_block)
+        self.assertNotIn('event is InputEventScreenTouch', script.split('func _unhandled_input', 1)[1].split('func _interpret_swipe', 1)[0])
+        self.assertTrue((ROOT / 'tests/test_touch_input.gd').is_file())
+
     def test_audio_assets_are_valid(self):
         for wav_path in (ROOT / 'audio').glob('*.wav'):
             with wave.open(str(wav_path), 'rb') as wf:
