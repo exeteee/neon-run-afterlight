@@ -1,0 +1,170 @@
+name: Build NEON RUN Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'NEON_RUN_AFTERLIGHT_source.zip'
+      - '.github/workflows/android-build.yml'
+      - '**.gd'
+      - '**.tscn'
+      - '**.tres'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'assets/**'
+      - 'audio/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: neon-run-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Validate and export APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Unpack the submitted project into the repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/neon-source"
+          unzip -q NEON_RUN_AFTERLIGHT_source.zip -d "$RUNNER_TEMP/neon-source"
+          test -f "$RUNNER_TEMP/neon-source/NEON_RUN_AFTERLIGHT/project.godot"
+          rsync -a --exclude='.github/' "$RUNNER_TEMP/neon-source/NEON_RUN_AFTERLIGHT/" ./
+          git status --short
+          git add -A
+          git reset -- NEON_RUN_AFTERLIGHT_source.zip || true
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Add extracted NEON RUN Godot project"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+
+      - name: Set up Python for project checks
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run project integrity tests
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python -m unittest discover -s tests -v
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT"
+          yes | sdkmanager --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          sdkmanager --sdk_root="$SDK_ROOT" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.1" \
+            "cmdline-tools;latest" \
+            "cmake;3.10.2.4988404" \
+            "ndk;28.1.13356709"
+
+      - name: Install Godot 4.7.2 and Android export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl -L --fail --retry 3 "$BASE/Godot_v4.7.2-stable_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          mkdir -p "$RUNNER_TEMP/godot"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          sudo install -m 0755 "$RUNNER_TEMP/godot/Godot_v4.7.2-stable_linux.x86_64" /usr/local/bin/godot
+          godot --version
+          curl -L --fail --retry 3 "$BASE/Godot_v4.7.2-stable_export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          mkdir -p "$RUNNER_TEMP/godot-templates"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/godot-templates"
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          cp -a "$RUNNER_TEMP/godot-templates/templates/." "$TEMPLATE_DIR/"
+          printf '4.7.2.stable' > "$TEMPLATE_DIR/version.txt"
+
+      - name: Configure Android debug signing and Godot paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          mkdir -p "$HOME/.android" "$HOME/.config/godot"
+          keytool -genkeypair -noprompt \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android -alias androiddebugkey -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 10000
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF2
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/debug_keystore = "$HOME/.android/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF2
+
+      - name: Import Godot project resources
+        run: godot --headless --editor --path . --import
+
+      - name: Launch the game headlessly for a startup smoke test
+        run: godot --headless --path . --quit-after 5
+
+      - name: Export debug APK
+        run: ./scripts/build_android.sh
+
+      - name: Verify APK package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/NEON_RUN_AFTERLIGHT.apk
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          apk = Path("build/NEON_RUN_AFTERLIGHT.apk")
+          with zipfile.ZipFile(apk) as archive:
+              names = set(archive.namelist())
+              assert "AndroidManifest.xml" in names, "APK has no AndroidManifest.xml"
+              assert any(name.startswith("lib/arm64-v8a/") for name in names), "APK has no arm64-v8a native library"
+          print(f"APK verified: {apk.stat().st_size:,} bytes")
+          PY
+
+      - name: Upload APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEON-RUN-AFTERLIGHT-APK
+          path: build/NEON_RUN_AFTERLIGHT.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish downloadable APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-build-${{ github.run_number }}
+          name: NEON RUN: AFTERLIGHT — Android build ${{ github.run_number }}
+          body: |
+            Automated debug APK build for direct Android installation.
+            Built with Godot 4.7.2. This is a sideload/debug build, not a Google Play release.
+          files: build/NEON_RUN_AFTERLIGHT.apk
+          make_latest: true
