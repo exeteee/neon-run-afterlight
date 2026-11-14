@@ -151,8 +151,26 @@ jobs:
             exit 1
           fi
 
-      - name: Export debug APK
-        run: ./scripts/build_android.sh
+      - name: Export signed debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_USER="androiddebugkey"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD="android"
+          ./scripts/build_android.sh
+
+      - name: Verify APK signature and alignment
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          BUILD_TOOLS="$SDK_ROOT/build-tools/35.0.1"
+          APK="build/NEON_RUN_AFTERLIGHT.apk"
+          test -x "$BUILD_TOOLS/apksigner"
+          test -x "$BUILD_TOOLS/zipalign"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
 
       - name: Verify APK package
         shell: bash
