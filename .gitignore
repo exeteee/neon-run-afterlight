@@ -1,0 +1,11 @@
+.godot/
+.import/
+export.cfg
+build/
+*.apk
+*.aab
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+.DS_Store
