@@ -151,6 +151,16 @@ jobs:
             exit 1
           fi
 
+      - name: Test full-screen touch gestures in Godot
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/test_touch_input.gd 2>&1 | tee "$RUNNER_TEMP/godot-touch.log"
+          if grep -E 'SCRIPT ERROR:|Failed to load script|Parse Error:|ERROR:' "$RUNNER_TEMP/godot-touch.log"; then
+            echo 'Touch input integration test reported a Godot error.' >&2
+            exit 1
+          fi
+
       - name: Export signed debug APK
         shell: bash
         run: |
