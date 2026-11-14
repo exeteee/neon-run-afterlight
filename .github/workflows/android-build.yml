@@ -168,3 +168,5 @@ jobs:
             Built with Godot 4.7.2. This is a sideload/debug build, not a Google Play release.
           files: build/NEON_RUN_AFTERLIGHT.apk
           make_latest: true
+
+# Workflow version: 2 — ensure the first push is scheduled.
