@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: neon-run-android-${{ github.ref }}
@@ -198,13 +199,6 @@ jobs:
           print(f"APK verified: {apk.stat().st_size:,} bytes")
           PY
 
-      - name: Upload APK build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: NEON-RUN-AFTERLIGHT-APK
-          path: build/NEON_RUN_AFTERLIGHT.apk
-          if-no-files-found: error
-          retention-days: 90
 
       - name: Publish downloadable APK release
         uses: softprops/action-gh-release@v2
@@ -216,5 +210,22 @@ jobs:
             Built with Godot 4.7.2. This is a sideload/debug build, not a Google Play release.
           files: build/NEON_RUN_AFTERLIGHT.apk
           make_latest: true
+
+      - name: Delete redundant APK artifacts after publishing the release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mapfile -t artifact_ids < <(
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \\
+              --jq '.artifacts[] | select(.name == "NEON-RUN-AFTERLIGHT-APK") | .id'
+          )
+          for artifact_id in "${artifact_ids[@]}"; do
+            echo "Deleting duplicate APK artifact: ${artifact_id}"
+            gh api --silent --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+          done
+          echo "Deleted ${#artifact_ids[@]} duplicate APK artifact(s)."
+
 
 # Workflow version: 2 — quote YAML release title and ensure the first push is scheduled.
